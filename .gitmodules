@@ -1,0 +1,6 @@
+[submodule "ghrd-socfpga"]
+	path = ghrd-socfpga
+	url = https://github.com/altera-opensource/ghrd-socfpga.git
+[submodule "u-boot-socfpga"]
+	path = u-boot-socfpga
+	url = https://github.com/altera-opensource/u-boot-socfpga.git

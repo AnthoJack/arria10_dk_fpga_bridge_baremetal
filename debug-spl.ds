@@ -1,0 +1,25 @@
+# initialize system
+stop
+wait 5s
+reset
+stop
+wait 5s
+set trust-ro-sections-for-opcodes off
+
+# load spl and run up until the warm reset
+loadfile \$sdir/u-boot-socfpga/spl/u-boot-spl 0x0
+start
+wait
+restore \$sdir/u-boot-socfpga/spl/u-boot-spl.dtb binary &__bss_end
+thbreak *0x0
+continue
+wait 60s
+
+# load spl again and run up until spl_boot_device
+loadfile \$sdir/u-boot-socfpga/spl/u-boot-spl 0x0
+start
+wait
+restore \$sdir/u-boot-socfpga/spl/u-boot-spl.dtb binary &__bss_end
+thbreak spl_boot_device
+continue
+wait 60s
