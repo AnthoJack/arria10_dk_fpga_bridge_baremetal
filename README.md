@@ -6,7 +6,7 @@ Example project for baremetal application accessing FPGA devices using the lw_h2
 * Quartus (20.1)
 * ARM Development Studio (2020.1)
 * arm-eabi- toolchain (Linaro 7.5.0)
-* ARM tools: Arria10 Linking script (Provided with IntelFPGA installation)
+* (optionally) ARM tools: Arria10 Linking script (Provided with IntelFPGA installation)
 
 ## Init submodules
 
@@ -45,16 +45,26 @@ This step may be done from inside Quartus but the command line is provided for a
 quartus_pgm -c 1 -m jtag -o "p;ghrd_socfpga/a10_soc_devkit_ghrd_std/output_files/ghrd_10as066n2.sof"
 ```
 
-## Build configuration
+## Example project and HWLib
 
-* Launch ARM-DS and create a new **C Project** (ours will be called *arria10_dk_fpga*) and in the **Toolchains** list select **GCC 6.2.0[arm-altera-eabi]** and then click on **Finish**
-* Right-click on you project and select **Properties**
-* In the window that opens, in the left menu, go to **C/C++ Build > Settings**
-* In the **Tool Settings** tab, go to **GCC C Linker 6.2.0[arm-altera-eabi] > Image**
-* In **Linker script** enter (or search using the **Browse** button) the linker script for the Arria10. It should be in **<IntelFPGA_install_folder>/University_Program/Monitor_Program/arm_tools/baremetal/arm-altera-eabi/lib/arria10-dk-ram-hosted.ld**
-* Save the settings and you should now be able to build using the **Hammer icon**
+Altera's [Socfpga Hardware Library (intel-socfpga_hwlib)](https://github.com/altera-opensource/intel-socfpga-hwlib) is included as a submodule. This repository provides a Hardware Abstraction Layer as well as linker scripts and code examples for the Arria10 and Cyclone V devkits
 
-The repository provides the **arria10_dk_fpga** folder which contains an ARM-DS project that already contains the build and debug configurations but this documentation still explains how to remake them from scratch to show what was done in case it must be changed
+### Create project from example
+
+Creating a project from an example allows minimal setup to be done while ending up with a project that supports the HWLib. Modifications can then be made to replace or add features 
+
+* Launch ARM-DS and click on **New Project**
+* In the window that opens, click on **C/C++ > Makefile Project  with Existing Code**, then **Next>**
+* Click on **Browse...** and open the **intel-socfpga-hwlib/examples/A10/Altera-SoCFPGA-HelloWorld-Baremetal-GNU** folder
+* Untick **C++**, select **GCC 6.2.0 [arm-altera-eabi]** and click **Finish**
+* You should now be able to build using the **Hammer icon**
+
+The **Makefile** inside the project allows you to configure the build. Take a look inside it
+
+The **ghrd_fpga** folder in this repository contains a tiny library with helper functions to access the switches and leds of the A10's FPGA using the GHRD design and can be used as a base to develop drivers for the devices on the FPGA. To include it to the project:
+
+* Right-click on the project and click **New > Folder**
+* Click **Advanced>>** and select the **Link to alternate location (Linked Folder)** then use **Browse...** to select the **ghrd_fpga** folder before clicking **Finish**
 
 ## Debug configuration
 
@@ -65,7 +75,7 @@ The repository provides the **arria10_dk_fpga** folder which contains an ARM-DS 
 * Go into the **Files** tab and in the **Target Configuration** box, select the **previously built .axf file** in **Application on host to download** either typing the path manually or using the **File System..** or **Workspace...** buttons. Make sure that **Load Symbol** is ticked
 * Finally, go to the **Debugger** tab and in the **Run control** box, select **Debug from symbol** and make sure that the field next to it contains **main**. Also tick the **Run target initialization debugger script** (Make sure you tick **target** and not **debug**) and select the **debug-spl.ds** debugger script in the field beneath. The file can be found at the root of the repository
 
-With that, you should have a functionning debug configuration. If the Arria10 devkit is turned on, connected to the computer and programmed with the GSRD and the baremetal application built, you can now launch and debug it by clicking **Debug**. Otherwise save the configuration and once you have a compiling C program, go to **Debug Control**, click on your new configuration and **Connect to Target** (Button on top or right-click). The program will be deployed onto the card and paused once it enters the *main* function
+With that, you should have a functionning debug configuration. If the Arria10 devkit is turned on, connected to the computer and programmed with the GHRD and the baremetal application built, you can now launch and debug the example by clicking **Debug**. Otherwise save the configuration and once you have a compiling C program, go to **Debug Control**, click on your new configuration and **Connect to Target** (Button on top or right-click). The program will be deployed onto the card and paused once it enters the *main* function
 
 ### U-boot Debug Config
 
@@ -73,21 +83,22 @@ If U-boot is the application you wish to debug, you can do so by creating anothe
 
 ## Resources
 
-The steps in this repository have been tested with promising results but aren't guaranteed to work. Should they fail to give a functioning environment, the following resources provide more in-depth steps to help 
+The steps in this repository have been tested but aren't guaranteed to work with new updates. Should they fail to give a functioning environment, the following resources provide more in-depth steps to help try to make it work again
 
 * [Arria 10 Register Address Map](https://www.intel.com/content/www/us/en/programmable/hps/arria-10/hps.html)
 * [Using ARM DS with arria10](https://www.rocketboards.org/foswiki/Documentation/SoCEDS): Includes instructions on how to install ARM-DS and how to install ARM-DS (and SOCEDS but this tool is deprecated) and how to configure it to launch and debug baremetal programs on Arria10
 * [Building U-boot for cyclone V and Arria 10](https://www.rocketboards.org/foswiki/Documentation/BuildingBootloaderCycloneVAndArria10): Steps to install the toolchain and build the bootloader. Some supplementary steps are described for "handoff" whose usefulness is yet to be found as it doesn't seem to make our project behave better or worse in our tests without doing it
 * [Arria 10 SoC GSRD](https://www.rocketboards.org/foswiki/Documentation/Arria10SoCGSRD): Documentation on the Golden Standard Reference Design for the devkit
+* **<IntelFPGA_install_folder>/University_Program/Monitor_Program/arm_tools/baremetal/arm-altera-eabi/lib/arria10-dk-ram-hosted.ld** is another linker script that showed promising results and might be a little bit easier to edit in order to create a linker script for a custom platform but it requires the IntelFPGA tools to be installed
 
-## Known problems
+## Notes
 
 ### Bridge reset signal
 
-The *lw_h2f* bridge's reset signal must be disabled for the FPGA devices to be accessible. This can be done by using the mask *0x2* on the register at address *0x0xffd0502c*
+The *lw_h2f* bridge's reset signal must be disabled for the FPGA devices to be accessible. This can be done by using the mask *0x2* on the register at address *0x0xffd0502c* or using the HWLib's *alt_bridge_init(ALT_BRIDGE_LWH2F)* (include *soc_a10/alt_bridge_manager.h*)
 
-Going forward, it would be interesting to find a way to do so in the SPL's config so the program doesn't need to do it itself
+It may be interesting to find a way to do so in the SPL's config so the program doesn't need to do it itself
 
 ### Disable watchdogs
 
-The SPL sets some watchdogs that reset the board (and thus re-enables the bridge's reset signal). One of which seems to be wdt_1 as it can be seen to be activated at program start (register at address 0xffd00300). However, another, 30s timer seems to be enabled by the SPL but it cannot be disabled in menuconfig (terminal flashes but box stays set). Other combinations of config options related to the watchdog have been attempted to no avail
+The SPL sets some watchdogs that reset the board (and thus re-enables the bridge's reset signal) after some time. Those cannot be disabled using their registers once activated and disabling them in menuconfig is impossible (Dependant on SOCFPGA parameter, terminal flashes but box stays set) without deeper modifications in Kconfig files. However, the HWLib provides functions that use the peripheral reset to disable it

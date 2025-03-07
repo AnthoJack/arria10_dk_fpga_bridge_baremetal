@@ -4,3 +4,6 @@
 [submodule "u-boot-socfpga"]
 	path = u-boot-socfpga
 	url = https://github.com/altera-opensource/u-boot-socfpga.git
+[submodule "intel-socfpga-hwlib"]
+	path = intel-socfpga-hwlib
+	url = git@github.com:altera-opensource/intel-socfpga-hwlib.git
