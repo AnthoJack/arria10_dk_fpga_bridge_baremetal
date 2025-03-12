@@ -86,6 +86,7 @@ Using the HWLib in a pre-existing ARM-DS project requires more configuration but
 * Launch ARM-DS and click on **New Project**
 * In the window that opens, click on **C/C++ > C Project**, then **Next>**
 * Give you project a name (We called ours *arria10_devkit_hps*) and select the **GCC 7.5.0 [arm-eabi]** toolchain added previously, then click **Finish**
+* In your project's folder, create a symlink that points to the HWLib: ``ln -s ../intel-socfpga-hwlib/armv7a/hwlib/ hwlib``
 * Right-click on your project and select **Properties**
 * Go to the C/C++ **Build > Settings Menu** and modify the following fields
 * **GCC C Compiler 7.5.0 [arm-eabi]**
