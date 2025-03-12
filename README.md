@@ -16,6 +16,8 @@ Initialise the submodules to retrieve the Bootloader (u-boot-socfpga) and Golden
 
 ## Building bootloader
 
+You should have a *arm-eabi-* toolchain installed on your computer to build programs for the Arria10. The code in this folder was tested with a GCC 7.5.0 toolchain from Linaro
+
 ``` bash
 cd u-boot-socfpga
 git checkout socfpga_v2020.04
@@ -45,13 +47,29 @@ This step may be done from inside Quartus but the command line is provided for a
 quartus_pgm -c 1 -m jtag -o "p;ghrd_socfpga/a10_soc_devkit_ghrd_std/output_files/ghrd_10as066n2.sof"
 ```
 
-## Example project and HWLib
+The *jtag_pgm.sh* script is provided for easier programming
 
-Altera's [Socfpga Hardware Library (intel-socfpga_hwlib)](https://github.com/altera-opensource/intel-socfpga-hwlib) is included as a submodule. This repository provides a Hardware Abstraction Layer as well as linker scripts and code examples for the Arria10 and Cyclone V devkits
+``` bash
+./jtag_pgm.sh ghrd-socfpga/a10_soc_devkit_ghrd_std/output_files/ghrd_10as066n2.sof 
+```
+
+## ARM-DS Projects
+
+ARM-DS is used to create programs to run on the Arria10
+
+Altera's [Socfpga Hardware Library (intel-socfpga_hwlib)](https://github.com/altera-opensource/intel-socfpga-hwlib) is included as a submodule. This repository provides a Hardware Abstraction Layer library as well as linker scripts and code examples for the Arria10 and Cyclone V devkits
+
+### Add Toolchain to ARM-DS
+
+The *arm-eabi-* toolchain needs to be added to ARM-DS
+
+* With ARM-DS open, go to **Window > Preferences**
+* In the **Arm DS > Toolchains** menu, click on **Add..**
+* In the Window that opens, Click on **Browse...** and select the folder in your toolchain installation folder that contains the *arm-eabi-gcc* executable, then click **Finish**
 
 ### Create project from example
 
-Creating a project from an example allows minimal setup to be done while ending up with a project that supports the HWLib. Modifications can then be made to replace or add features 
+Creating a project from an example allows minimal setup to be done while ending up with a project that supports the HWLib. Modifications can then be made to replace or add features by modifying the Makefile
 
 * Launch ARM-DS and click on **New Project**
 * In the window that opens, click on **C/C++ > Makefile Project  with Existing Code**, then **Next>**
@@ -59,12 +77,53 @@ Creating a project from an example allows minimal setup to be done while ending 
 * Untick **C++**, select **GCC 6.2.0 [arm-altera-eabi]** and click **Finish**
 * You should now be able to build using the **Hammer icon**
 
-The **Makefile** inside the project allows you to configure the build. Take a look inside it
+The **Makefile** inside the project allows you to configure the build. Take a look inside it and modify it if you want to add files and libraries. How to do so isn't explained here
 
-The **ghrd_fpga** folder in this repository contains a tiny library with helper functions to access the switches and leds of the A10's FPGA using the GHRD design and can be used as a base to develop drivers for the devices on the FPGA. To include it to the project:
+### Include HWlib in custom project
 
-* Right-click on the project and click **New > Folder**
-* Click **Advanced>>** and select the **Link to alternate location (Linked Folder)** then use **Browse...** to select the **ghrd_fpga** folder before clicking **Finish**
+Using the HWLib in a pre-existing ARM-DS project requires more configuration but more easily lets files be added to the project afterwards. A basic project is provided in this repository (*arria10_devkit_hps*) to save you from doing the configuration yourself. The following steps explain how to recreate the configuration for troubleshooting purposes
+
+* Launch ARM-DS and click on **New Project**
+* In the window that opens, click on **C/C++ > C Project**, then **Next>**
+* Give you project a name (We called ours *arria10_devkit_hps*) and select the **GCC 7.5.0 [arm-eabi]** toolchain added previously, then click **Finish**
+* Right-click on your project and select **Properties**
+* Go to the C/C++ **Build > Settings Menu** and modify the following fields
+* **GCC C Compiler 7.5.0 [arm-eabi]**
+  * **Target**
+    * **CPU (-mcpu)**: *cortex-a9*
+    * **FPU (-mfpu)**: *neon*
+    * **Float ABI (-mfloat-abi)**: *softfp*
+  * **Symbols**
+    * **Defined symbols (-D)**: click on **Add...** (File with green "+" symbol at the top-right) to add the following symbols (one symbol per line)
+      * *PRINTF_HOST*
+      * *ARRIA10*
+      * *soc_a10*
+  * **Includes**
+    * **Include Paths (-I)**: click on **Add...** (File with green "+" symbol at the top-right) to add the following paths (one path per line)
+      * *../hwlib/include*
+      * *../hwlib/include/soc_a10*
+      * *../hwlib/include/soc_a10/socal*
+  * **Miscellaneous**
+    * **Other flags**: *-fdata-sections -ffunction-sections*
+* **GCC C Linker 7.5.0 [arm-eabi]**
+  * **Image**
+    * **Linker script**: *${workspace_loc:/arria10_devkit_hps}/hwlib/src/linkerscripts/arria10-ddr.ld*
+  * **Miscellaneous**
+    * **Other flags**: *-Wl,--gc-sections*
+    * **Other options (-Xlinker [option])**: click on **Add...** (File with green "+" symbol at the top-right) to add the following options (one path per line)
+      * *--require-defined=__auto_semihosting*
+
+By right-clicking on a file and selecting **Resource Configuration > Exclude from Build...**, you can prevent files from being built in the selected configurations. Use this to exclude the following files and folders from the configuration you want to use (only exclude leaf elements)
+
+* *hwlib/src/*
+  * *hwmgr/*
+    * *alt_interrupt_armcc.s (No assembly when using GCC toolchain)
+    * *alt_interrupt_armclang.s (No assembly when using GCC toolchain)
+    * *soc_cv_av/* (Creating program for Arria10 not Cyclone5)
+  * *utils*
+    * *alt_base.S* (No assembly when using GCC toolchain)
+    * *alt_p2uart.c* (Using semihosting: don't print to UART)
+    * *alt_printf.c* (Using semihosting: don't print to UART)
 
 ## Debug configuration
 
