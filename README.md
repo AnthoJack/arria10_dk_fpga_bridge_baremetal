@@ -8,11 +8,34 @@ Example project for baremetal application accessing FPGA devices using the lw_h2
 * arm-eabi- toolchain (Linaro 7.5.0)
 * (optionally) ARM tools: Arria10 Linking script (Provided with IntelFPGA installation)
 
+## Dependencies
+
+Install the dependencies below
+
+``` bash
+sudo apt-get install flex bison curl
+```
+
+## Environment variable
+
+to ensure project compilation add these lines into ~/.bashrc :
+
+> export PATH=/xxx/(linaro_toolchain_directory)/gcc/bin:/xxx/intelFPGA/20.1/quartus/bin:/xxx/intelFPGA/20.1/quartus/sopc_builder/bin:$PATH
+> export QSYS_ROOTDIR="/xxx/intelFPGA/20.1/quartus/sopc_builder/bin"
+> export QUARTUS_ROOTDIR=/xxx/intelFPGA/20.1/quartus
+> export LD_LIBRARY_PATH=$QUARTUS_ROOTDIR/linux64
+
 ## Init submodules
 
 Initialise the submodules to retrieve the Bootloader (u-boot-socfpga) and Golden Hardware Reference Design
 
 > git submodule update --init --recursive
+
+Run this command to retrieve the correct version of Intel SoC FPGA HWLIB
+
+``` bash
+./fix_submodules.sh
+```
 
 ## Building bootloader
 
@@ -34,7 +57,7 @@ Before running any program on the card, the SoC should be programmed. We will us
 Synthesize and generate the GHRD bitstream
 
 ``` bash
-cd ghrd_socfpga
+cd ghrd-socfpga
 # Make sure quartus can be called (binary in PATH and QUARTUS_ROOTDIR envvar is set)
 make generate_from_tcl
 make rbf
@@ -44,7 +67,7 @@ make rbf
 This step may be done from inside Quartus but the command line is provided for automation purposes
 
 ``` bash
-quartus_pgm -c 1 -m jtag -o "p;ghrd_socfpga/a10_soc_devkit_ghrd_std/output_files/ghrd_10as066n2.sof"
+quartus_pgm -c 1 -m jtag -o "p;ghrd-socfpga/a10_soc_devkit_ghrd_std/output_files/ghrd_10as066n2.sof"
 ```
 
 The *jtag_pgm.sh* script is provided for easier programming
@@ -56,6 +79,8 @@ The *jtag_pgm.sh* script is provided for easier programming
 ## ARM-DS Projects
 
 ARM-DS is used to create programs to run on the Arria10
+
+**Note:** It is important to launch ARM DS with command line to use LD_LIBRARY_PATH environment variable
 
 Altera's [Socfpga Hardware Library (intel-socfpga_hwlib)](https://github.com/altera-opensource/intel-socfpga-hwlib) is included as a submodule. This repository provides a Hardware Abstraction Layer library as well as linker scripts and code examples for the Arria10 and Cyclone V devkits
 
@@ -75,6 +100,7 @@ Creating a project from an example allows minimal setup to be done while ending 
 * In the window that opens, click on **C/C++ > Makefile Project  with Existing Code**, then **Next>**
 * Click on **Browse...** and open the **intel-socfpga-hwlib/examples/A10/Altera-SoCFPGA-HelloWorld-Baremetal-GNU** folder
 * Untick **C++**, select **GCC 6.2.0 [arm-altera-eabi]** and click **Finish**
+* Add the path to **arm-eabi-gcc** for Make instructions by writing this in the Makefile of the project : "export PATH := /xxx/(linary_toolchain/directory)/gcc/bin:$(PATH)
 * You should now be able to build using the **Hammer icon**
 
 The **Makefile** inside the project allows you to configure the build. Take a look inside it and modify it if you want to add files and libraries. How to do so isn't explained here
