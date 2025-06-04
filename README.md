@@ -20,10 +20,10 @@ sudo apt-get install flex bison curl
 
 to ensure project compilation add these lines into ~/.bashrc :
 
-> export PATH=/xxx/(linaro_toolchain_directory)/gcc/bin:/xxx/intelFPGA/20.1/quartus/bin:/xxx/intelFPGA/20.1/quartus/sopc_builder/bin:$PATH
-> export QSYS_ROOTDIR="/xxx/intelFPGA/20.1/quartus/sopc_builder/bin"
-> export QUARTUS_ROOTDIR=/xxx/intelFPGA/20.1/quartus
-> export LD_LIBRARY_PATH=$QUARTUS_ROOTDIR/linux64
+`export PATH=/xxx/(linaro_toolchain_directory)/gcc/bin:/xxx/intelFPGA/20.1/quartus/bin:/xxx/intelFPGA/20.1/quartus/sopc_builder/bin:$PATH`
+`export QSYS_ROOTDIR="/xxx/intelFPGA/20.1/quartus/sopc_builder/bin"`
+`export QUARTUS_ROOTDIR=/xxx/intelFPGA/20.1/quartus`
+`export LD_LIBRARY_PATH=$QUARTUS_ROOTDIR/linux64`
 
 ## Init submodules
 
